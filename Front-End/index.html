@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title> Bar</title>
+    <link rel="stylesheet" type="text/css" href="../Front-End/css/style.css">
+    <script src="../Front-End/node_modules/chart.js/dist/Chart.min.js"></script>
+    <script src="../Front-End/js/utils.js"></script>
+    <script src="../Front-End/js/jquery-3.3.1.min.js"></script>
+    <script src="../Front-End/js/bootstrap.min.js"></script>
+    <script>
+        var counter = []
+        var lastId;
+        var data, chart;
+        $(window).on("load", function () {
+            (function loadArticle(pageNumber) {
+                $.ajax({
+                    url: "http://localhost:3000/api/users/@BegHanifa"
+                    , type: 'GET'
+                    , data: {
+                        "lastId": lastId
+                    }
+                    , success: function (html) {
+                        let text = html.NewTweets.join(`<br>` + `##`)
+                        counter = html.count;
+                        console.log(counter)
+                        lastId = html.last_d
+                        $("#tweetBox").append(`##` + text);
+                        var DATA_COUNT = 7;
+                        var utils = Samples.utils;
+
+                        function colorize(opaque, ctx) {
+                            var v = ctx.dataset.data[ctx.dataIndex];
+                            var c = v < -50 ? '#D60000' : v < 0 ? '#F46300' : v < 50 ? '#0358B6' : '#44DE28';
+                            return opaque ? c : utils.transparentize(c, 1 - Math.abs(v / 150));
+                        }
+                        var options = {
+                            legend: false
+                            , tooltips: false
+                            , elements: {
+                                rectangle: {
+                                    backgroundColor: colorize.bind(null, false)
+                                    , borderColor: colorize.bind(null, true)
+                                    , borderWidth: 2
+                                }
+                            }
+                        };
+                        utils.generate(counter)
+                        data = {
+                            labels: utils.Weeks({
+                                count: 7
+                            })
+                            , datasets: [{
+                                data: counter
+                        			}]
+                        };
+                        chart = new Chart('chart-0', {
+                            type: 'bar'
+                            , data: data
+                            , options: options
+                        });
+                    }
+                });
+                return false;
+            })()
+        });
+    </script>
+</head>
+
+<body>
+    <div class="content">
+        <div class="wrapper bor row box1">
+            <canvas id="chart-0"></canvas>
+        </div>
+        <div id="tweetBox" class="row bor1 box2" style="height: 250px;
+width: 250px;font:16px/26px Georgia, Garamond, Serif;overflow:scroll;"> </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            var DATA_COUNT = 7;
+            var utils = Samples.utils;
+            $("#tweetBox").scroll(function () {
+                if ($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
+                    loadArticle();
+                }
+            });
+
+            function loadArticle(pageNumber) {
+                $.ajax({
+                    url: "http://localhost:3000/api/users/@BegHanifa/"
+                    , type: 'GET'
+                    , data: {
+                        "lastId": lastId
+                    }
+                    , success: function (html) {
+                        let text = html.NewTweets.join(`<br>` + `##`)
+                        console.log(text)
+                        lastId = html.last_d
+                        counter = html.count
+                        var oldarray = utils.getarray()
+                        oldarray.forEach(function (ele, index) {
+                            console.log(ele)
+                        })
+                        counter.forEach(function (ele, index) {
+                            counter[index] = ele + oldarray[index]
+                        })
+                        utils.generate(counter)
+                        data.datasets.forEach(function (ele) {
+                            ele.data = counter
+                        })
+                        chart.update()
+                        $("#tweetBox").append(`##` + text);
+                    }
+                });
+                return false;
+            }
+        })
+    </script>
+</body>
+
+</html>
